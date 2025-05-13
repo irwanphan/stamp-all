@@ -1,0 +1,13 @@
+name: stamp_all
+description: A new Flutter project.
+
+environment:
+  sdk: '>=3.5.0 <4.0.0'
+
+dependencies:
+  flutter:
+    sdk: flutter
+  path_provider: ^2.1.1
+  sqflite: ^2.3.0
+  encrypt: ^5.0.1
+  archive: ^3.3.6
