@@ -206,13 +206,13 @@
       "languageVersion": "3.3"
     },
     {
-      "name": "stamp_all",
+      "name": "stampede",
       "rootUri": "../",
       "packageUri": "lib/",
       "languageVersion": "3.5"
     }
   ],
-  "generated": "2025-05-13T15:40:24.341373Z",
+  "generated": "2025-05-13T15:47:37.805865Z",
   "generator": "pub",
   "generatorVersion": "3.5.4",
   "flutterRoot": "file:///Users/irwanphan/TurbidDev/flutter",
