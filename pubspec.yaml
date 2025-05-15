@@ -1,5 +1,5 @@
 name: stampede
-description: A new Flutter project.
+description: A secure offline-first dashboard for managing stakeholder data.
 
 environment:
   sdk: '>=3.5.0 <4.0.0'
@@ -11,3 +11,11 @@ dependencies:
   sqflite: ^2.3.0
   encrypt: ^5.0.1
   archive: ^3.3.6
+
+flutter:
+  uses-material-design: true
+  assets:
+    - assets/icon.png
+
+windows:
+  icon: assets/icon.ico
