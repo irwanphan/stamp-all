@@ -1,0 +1,17 @@
+# pubspec_native_splash.yaml
+
+flutter_native_splash:
+  color: "#006EBE"
+  image: assets/splash_logo.png
+  android: true
+  ios: true
+  fullscreen: true
+
+  android_12:
+    image: assets/splash_logo.png
+    icon_background_color: "#006EBE"
+    branding: assets/branding.png
+    color: "#006EBE"
+    color_dark: "#003B6F"
+
+  web: false
