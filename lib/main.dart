@@ -2,6 +2,7 @@
 
 import 'package:flutter/material.dart';
 import 'screens/individu_page.dart';
+import 'screens/instansi_page.dart';
 import 'widgets/sidebar.dart';
 
 void main() => runApp(MyApp());
@@ -30,7 +31,7 @@ class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
   final List<Widget> _pages = [
     IndividuPage(),
-    Center(child: Text("Instansi - Coming Soon")),
+    InstansiPage(),
     Center(child: Text("Manajemen Data - Coming Soon")),
   ];
 
