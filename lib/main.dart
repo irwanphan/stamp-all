@@ -3,6 +3,7 @@
 import 'package:flutter/material.dart';
 import 'screens/individu_page.dart';
 import 'screens/instansi_page.dart';
+import 'screens/manage_page.dart';
 import 'widgets/sidebar.dart';
 
 void main() => runApp(MyApp());
@@ -32,7 +33,7 @@ class _MainLayoutState extends State<MainLayout> {
   final List<Widget> _pages = [
     IndividuPage(),
     InstansiPage(),
-    Center(child: Text("Manajemen Data - Coming Soon")),
+    ManagePage(),
   ];
 
   @override
