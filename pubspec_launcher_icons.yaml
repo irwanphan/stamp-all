@@ -1,0 +1,7 @@
+# pubspec_launcher_icons.yaml
+
+flutter_icons:
+  android: true
+  ios: true
+  image_path: "assets/icon.png"
+  remove_alpha_ios: true

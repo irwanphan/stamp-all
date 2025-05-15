@@ -1,0 +1,27 @@
+# android/build.yaml untuk build APK release
+
+# Di terminal, jalankan: flutter build apk --release
+
+android:
+  compileSdkVersion: 33
+  defaultConfig:
+    applicationId: com.pertamina.stamp
+    minSdkVersion: 21
+    targetSdkVersion: 33
+    versionCode: 1
+    versionName: 1.0.0
+
+  signingConfigs:
+    release:
+      storeFile: keystore.jks
+      storePassword: yourStorePassword
+      keyAlias: yourKeyAlias
+      keyPassword: yourKeyPassword
+
+  buildTypes:
+    release:
+      signingConfig: release
+      minifyEnabled: false
+      shrinkResources: false
+      proguardFiles:
+        - proguard-rules.pro
