@@ -1,7 +1,11 @@
+// instansi_form.dart - Formulir untuk input data instansi lengkap
+import 'dart:io';
+
 import 'package:flutter/material.dart';
+// import 'package:image_picker/image_picker.dart';
+import 'package:path/path.dart' as p;
+import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
-import 'package:path/path.dart';
-// import '../helper.dart';
 
 class InstansiFormPage extends StatefulWidget {
   @override
@@ -10,71 +14,138 @@ class InstansiFormPage extends StatefulWidget {
 
 class _InstansiFormPageState extends State<InstansiFormPage> {
   final _formKey = GlobalKey<FormState>();
-  final TextEditingController _namaController = TextEditingController();
-  final TextEditingController _lokasiController = TextEditingController();
+  late Database db;
+
+  final namaController = TextEditingController();
+  final lokasiController = TextEditingController();
+  final kategoriController = TextEditingController();
+  final emailController = TextEditingController();
+  final websiteController = TextEditingController();
+  final kontakController = TextEditingController();
+  final picController = TextEditingController();
+  final deskripsiController = TextEditingController();
+  final koordinatController = TextEditingController();
+
+  File? _foto;
 
   Future<String> get _dbPath async {
-    final databasesPath = await getDatabasesPath();
-    return join(databasesPath, 'stamp.db');
+    final dir = await getApplicationDocumentsDirectory();
+    return p.join(dir.path, "stamp.db");
   }
 
-  Future<void> _simpanInstansi(BuildContext context) async {
-    if (_formKey.currentState!.validate()) {
-      final db = await openDatabase(await _dbPath);
-      await db.insert('instansi', {
-        'nama': _namaController.text,
-        'lokasi': _lokasiController.text,
-        'status': 'High Interest',
-        'aktif': 1,
-        'tanggal': DateTime.now().toIso8601String(),
-      });
-      await db.close();
-      Navigator.pop(context);
-    }
+  Future<void> initDB() async {
+    final path = await _dbPath;
+    db = await openDatabase(
+      path,
+      version: 1,
+      onCreate: (Database db, int version) async {
+        await db.execute('''
+          CREATE TABLE instansi (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nama TEXT,
+            lokasi TEXT,
+            kategori TEXT,
+            email TEXT,
+            website TEXT,
+            kontak TEXT,
+            pic TEXT,
+            deskripsi TEXT,
+            foto TEXT,
+            koordinat TEXT
+          )
+        ''');
+      },
+    );
+  }
+
+  Future<void> simpanInstansi() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final data = {
+      'nama': namaController.text,
+      'lokasi': lokasiController.text,
+      'kategori': kategoriController.text,
+      'email': emailController.text,
+      'website': websiteController.text,
+      'kontak': kontakController.text,
+      'pic': picController.text,
+      'deskripsi': deskripsiController.text,
+      'koordinat': koordinatController.text,
+      'foto': _foto?.path ?? '',
+    };
+
+    await db.insert('instansi', data);
+    Navigator.pop(context);
+  }
+
+  // Future<void> _pickImage() async {
+  //   final picker = ImagePicker();
+  //   final picked = await picker.pickImage(source: ImageSource.gallery);
+  //   if (picked != null) {
+  //     setState(() => _foto = File(picked.path));
+  //   }
+  // }
+
+  @override
+  void initState() {
+    super.initState();
+    initDB();
   }
 
   @override
   void dispose() {
-    _namaController.dispose();
-    _lokasiController.dispose();
+    db.close();
     super.dispose();
+  }
+
+  Widget _buildTextField(String label, TextEditingController controller) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(labelText: label),
+      validator: (value) =>
+          value == null || value.isEmpty ? 'Wajib diisi' : null,
+    );
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(
-        title: Text('Tambah Instansi'),
-        backgroundColor: Colors.blue.shade700,
-      ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
+      appBar: AppBar(title: Text('Tambah Data Instansi')),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
         child: Form(
           key: _formKey,
           child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              _buildTextField('Nama Instansi', namaController),
+              _buildTextField('Kategori Instansi', kategoriController),
+              _buildTextField('Email', emailController),
+              _buildTextField('Website', websiteController),
+              _buildTextField('Kontak', kontakController),
+              _buildTextField('PIC', picController),
+              _buildTextField('Lokasi', lokasiController),
+              _buildTextField('Koordinat', koordinatController),
               TextFormField(
-                controller: _namaController,
-                decoration: InputDecoration(labelText: 'Nama Instansi'),
-                validator: (value) =>
-                    value == null || value.isEmpty ? 'Wajib diisi' : null,
+                controller: deskripsiController,
+                decoration: InputDecoration(labelText: 'Deskripsi'),
+                maxLines: 4,
               ),
               SizedBox(height: 16),
-              TextFormField(
-                controller: _lokasiController,
-                decoration: InputDecoration(labelText: 'Lokasi'),
+              Row(
+                children: [
+                  // ElevatedButton(
+                  //   onPressed: _pickImage,
+                  //   child: Text("Pilih Foto"),
+                  // ),
+                  SizedBox(width: 10),
+                  if (_foto != null) Text(p.basename(_foto!.path)),
+                ],
               ),
-              SizedBox(height: 32),
+              SizedBox(height: 24),
               ElevatedButton(
-                onPressed: () => _simpanInstansi(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.blue.shade700,
-                  padding:
-                      EdgeInsets.symmetric(horizontal: 24.0, vertical: 12.0),
-                ),
+                onPressed: simpanInstansi,
                 child: Text('Simpan Instansi'),
-              ),
+              )
             ],
           ),
         ),

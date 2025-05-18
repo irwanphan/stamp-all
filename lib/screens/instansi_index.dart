@@ -4,6 +4,7 @@ import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import 'instansi_form.dart';
+import 'instansi_detail.dart';
 
 class InstansiIndexPage extends StatefulWidget {
   @override
@@ -29,7 +30,15 @@ class _InstansiIndexPageState extends State<InstansiIndexPage> {
           CREATE TABLE instansi (
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             nama TEXT,
-            lokasi TEXT
+            lokasi TEXT,
+            kategori TEXT,
+            email TEXT,
+            website TEXT,
+            kontak TEXT,
+            pic TEXT,
+            deskripsi TEXT,
+            foto TEXT,
+            koordinat TEXT
           )
         ''');
       },
@@ -92,7 +101,13 @@ class _InstansiIndexPageState extends State<InstansiIndexPage> {
                               icon: Icon(Icons.remove_red_eye_outlined,
                                   color: Colors.blue),
                               onPressed: () {
-                                // Tampilkan halaman detail instansi jika sudah tersedia
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) =>
+                                        InstansiDetailPage(instansi: item),
+                                  ),
+                                );
                               },
                             ),
                           ),
