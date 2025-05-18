@@ -31,7 +31,7 @@ class _ManagePageState extends State<ManagePage> {
 
     final dbBytes = await file.readAsBytes();
     final key = encrypt.Key.fromUtf8(password.padRight(32, '0'));
-    final iv = encrypt.IV.fromLength(16);
+    final iv = encrypt.IV.fromSecureRandom(16); // generate IV
     final encrypter = encrypt.Encrypter(encrypt.AES(key));
     final encrypted = encrypter.encryptBytes(dbBytes, iv: iv);
 
@@ -42,7 +42,9 @@ class _ManagePageState extends State<ManagePage> {
     }
 
     final backupFile = File(join(result, 'backup_stamp.enc'));
-    await backupFile.writeAsBytes(encrypted.bytes);
+
+    // Simpan IV (16 byte) + encrypted data
+    await backupFile.writeAsBytes(iv.bytes + encrypted.bytes);
 
     setState(() => status = "Backup sukses di folder:\n${backupFile.path}");
   }
@@ -59,14 +61,18 @@ class _ManagePageState extends State<ManagePage> {
     }
 
     final backupPath = result.files.single.path!;
-    final encBytes = await File(backupPath).readAsBytes();
+    final backupBytes = await File(backupPath).readAsBytes();
 
     try {
       final key = encrypt.Key.fromUtf8(password.padRight(32, '0'));
-      final iv = encrypt.IV.fromLength(16);
+
+      // Pisahkan IV (first 16 byte) dan encrypted data
+      final iv = encrypt.IV(backupBytes.sublist(0, 16));
+      final encryptedData = backupBytes.sublist(16);
+
       final encrypter = encrypt.Encrypter(encrypt.AES(key));
       final decrypted = encrypter.decryptBytes(
-        encrypt.Encrypted(encBytes),
+        encrypt.Encrypted(encryptedData),
         iv: iv,
       );
 
