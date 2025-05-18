@@ -5,6 +5,7 @@ import 'screens/individu_page.dart';
 import 'screens/instansi_page.dart';
 import 'screens/manage_page.dart';
 import 'widgets/sidebar.dart';
+import 'widgets/header_topbar.dart';
 
 void main() => runApp(MyApp());
 
@@ -39,7 +40,11 @@ class _MainLayoutState extends State<MainLayout> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text("STAMP Dashboard")),
+      appBar: HeaderTopBar(
+        title: "Instansi",
+        userName: "Irwan Phan",
+        userRole: "Market Analyst",
+      ),
       drawer: Sidebar(
         currentIndex: _selectedIndex,
         onTap: (index) => setState(() => _selectedIndex = index),

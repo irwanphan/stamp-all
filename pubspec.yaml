@@ -21,6 +21,7 @@ flutter:
   assets:
     - assets/icon.png
     - assets/logo.png
-
+    - assets/avatar.png
+    
 windows:
   icon: assets/icon.ico
