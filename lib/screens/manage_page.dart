@@ -4,6 +4,8 @@ import 'package:path_provider/path_provider.dart';
 import 'package:encrypt/encrypt.dart' as encrypt;
 import 'dart:io';
 import 'package:path/path.dart';
+import 'package:sqflite/sqflite.dart';
+import '../helper.dart';
 
 class ManagePage extends StatefulWidget {
   @override
@@ -80,6 +82,18 @@ class _ManagePageState extends State<ManagePage> {
             icon: Icon(Icons.restore),
             label: Text("Restore dari backup"),
             onPressed: () => restoreData("pertamina_secure"),
+          ),
+          SizedBox(height: 12),
+          ElevatedButton.icon(
+            icon: Icon(Icons.bug_report),
+            label: Text("Isi Dummy Data"),
+            onPressed: () async {
+              final dbPath = await _dbPath;
+              final db = await openDatabase(dbPath);
+              await insertDummyData(db);
+              await db.close();
+              setState(() => status = "Dummy data berhasil dimasukkan.");
+            },
           ),
           SizedBox(height: 24),
           Divider(),
