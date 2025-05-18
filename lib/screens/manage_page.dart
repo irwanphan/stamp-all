@@ -5,6 +5,7 @@ import 'package:encrypt/encrypt.dart' as encrypt;
 import 'dart:io';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
+import 'package:file_picker/file_picker.dart';
 import '../helper.dart';
 
 class ManagePage extends StatefulWidget {
@@ -27,57 +28,53 @@ class _ManagePageState extends State<ManagePage> {
       setState(() => status = "Database tidak ditemukan.");
       return;
     }
-    final dbBytes = await file.readAsBytes();
 
+    final dbBytes = await file.readAsBytes();
     final key = encrypt.Key.fromUtf8(password.padRight(32, '0'));
     final iv = encrypt.IV.fromLength(16);
     final encrypter = encrypt.Encrypter(encrypt.AES(key));
     final encrypted = encrypter.encryptBytes(dbBytes, iv: iv);
 
-    final output = await getApplicationDocumentsDirectory();
-    final backupFile = File(join(output.path, 'backup_stamp.enc'));
+    final result = await FilePicker.platform.getDirectoryPath();
+    if (result == null) {
+      setState(() => status = "Backup dibatalkan.");
+      return;
+    }
+
+    final backupFile = File(join(result, 'backup_stamp.enc'));
     await backupFile.writeAsBytes(encrypted.bytes);
 
-    setState(() => status = "Backup sukses: ${backupFile.path}");
+    setState(() => status = "Backup sukses di folder:\n${backupFile.path}");
   }
 
   Future<void> restoreData(String password) async {
-    try {
-      final input = await getApplicationDocumentsDirectory();
-      final backupFile = File(join(input.path, 'backup_stamp.enc'));
-      if (!await backupFile.exists()) {
-        setState(() => status = "File backup tidak ditemukan.");
-        return;
-      }
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.custom,
+      allowedExtensions: ['enc'],
+    );
 
-      final encBytes = await backupFile.readAsBytes();
+    if (result == null || result.files.single.path == null) {
+      setState(() => status = "Restore dibatalkan.");
+      return;
+    }
+
+    final backupPath = result.files.single.path!;
+    final encBytes = await File(backupPath).readAsBytes();
+
+    try {
       final key = encrypt.Key.fromUtf8(password.padRight(32, '0'));
       final iv = encrypt.IV.fromLength(16);
       final encrypter = encrypt.Encrypter(encrypt.AES(key));
-
       final decrypted = encrypter.decryptBytes(
         encrypt.Encrypted(encBytes),
         iv: iv,
       );
 
       final path = await _dbPath;
-
-      // tutup DB sebelum restore
-      final db = await openDatabase(path);
-      await db.close();
-
-      // replace db file
       await File(path).writeAsBytes(decrypted);
-
-      // opsional: buka ulang DB dan cek
-      final newDb = await openDatabase(path);
-      final count = Sqflite.firstIntValue(
-          await newDb.rawQuery('SELECT COUNT(*) FROM instansi'))!;
-      await newDb.close();
-
-      setState(() => status = "Restore selesai. Instansi ter-load: $count");
+      setState(() => status = "Restore berhasil dari file:\n$backupPath");
     } catch (e) {
-      setState(() => status = "Gagal restore: $e");
+      setState(() => status = "Gagal restore: ${e.toString()}");
     }
   }
 
