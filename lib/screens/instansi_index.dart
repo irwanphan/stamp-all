@@ -1,52 +1,51 @@
-// instansi_index.dart
+// instansi_index.dart - Menampilkan data dari SQLite dalam bentuk tabel dengan tombol detail
 import 'package:flutter/material.dart';
+import 'package:sqflite/sqflite.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart';
 import 'instansi_form.dart';
 
-class InstansiIndexPage extends StatelessWidget {
-  final List<Map<String, dynamic>> dummyInstansi = [
-    {
-      'nama': 'The X Corp',
-      'status': 'High Interest',
-      'tanggal': 'Apr 20, 2025',
-      'aktif': true
-    },
-    {
-      'nama': 'Datascale AI Corp',
-      'status': 'High Interest',
-      'tanggal': 'Apr 20, 2025',
-      'aktif': true
-    },
-    {
-      'nama': 'Media Channel Corp',
-      'status': 'High Interest',
-      'tanggal': 'Apr 13, 2025',
-      'aktif': true
-    },
-    {
-      'nama': 'Networking Corp',
-      'status': 'Prospect',
-      'tanggal': 'Mar 20, 2025',
-      'aktif': true
-    },
-    {
-      'nama': 'Doel People',
-      'status': 'Inaktif',
-      'tanggal': 'Mar 15, 2025',
-      'aktif': false
-    },
-  ];
+class InstansiIndexPage extends StatefulWidget {
+  @override
+  _InstansiIndexPageState createState() => _InstansiIndexPageState();
+}
 
-  Color getBadgeColor(String status) {
-    switch (status) {
-      case 'High Interest':
-        return Colors.green.shade100;
-      case 'Prospect':
-        return Colors.orange.shade100;
-      case 'Inaktif':
-        return Colors.red.shade100;
-      default:
-        return Colors.grey.shade200;
-    }
+class _InstansiIndexPageState extends State<InstansiIndexPage> {
+  List<Map<String, dynamic>> instansiList = [];
+  late Database db;
+
+  Future<String> get _dbPath async {
+    final dir = await getApplicationDocumentsDirectory();
+    return join(dir.path, "stamp.db");
+  }
+
+  Future<void> initDB() async {
+    final path = await _dbPath;
+    db = await openDatabase(
+      path,
+      version: 1,
+      onCreate: (Database db, int version) async {
+        await db.execute('''
+          CREATE TABLE instansi (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            nama TEXT,
+            lokasi TEXT
+          )
+        ''');
+      },
+    );
+    loadInstansi();
+  }
+
+  Future<void> loadInstansi() async {
+    instansiList = await db.query('instansi');
+    setState(() {});
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    initDB();
   }
 
   @override
@@ -66,7 +65,7 @@ class InstansiIndexPage extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(builder: (context) => InstansiFormPage()),
-                  );
+                  ).then((_) => loadInstansi());
                 },
                 child: Text("Input Baru"),
               )
@@ -74,54 +73,42 @@ class InstansiIndexPage extends StatelessWidget {
           ),
           SizedBox(height: 16),
           Expanded(
-            child: SingleChildScrollView(
-              child: DataTable(
-                columns: const [
-                  DataColumn(label: Text("Nama")),
-                  DataColumn(label: Text("Status")),
-                  DataColumn(label: Text("Tanggal Input")),
-                  DataColumn(label: Text("Aktif")),
-                  DataColumn(label: Text("Action")),
-                ],
-                rows: dummyInstansi.map((data) {
-                  return DataRow(cells: [
-                    DataCell(Text(data['nama'])),
-                    DataCell(Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: getBadgeColor(data['status']),
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child:
-                          Text(data['status'], style: TextStyle(fontSize: 12)),
-                    )),
-                    DataCell(Text(data['tanggal'])),
-                    DataCell(Container(
-                      padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                      decoration: BoxDecoration(
-                        color: data['aktif']
-                            ? Colors.green.shade100
-                            : Colors.red.shade100,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Text(data['aktif'] ? 'Aktif' : 'Inaktif'),
-                    )),
-                    DataCell(Row(
-                      children: [
-                        IconButton(icon: Icon(Icons.search), onPressed: () {}),
-                        IconButton(
-                            icon: Icon(Icons.favorite_border),
-                            onPressed: () {}),
-                        IconButton(icon: Icon(Icons.delete), onPressed: () {}),
-                      ],
-                    )),
-                  ]);
-                }).toList(),
-              ),
-            ),
+            child: instansiList.isEmpty
+                ? Center(child: Text("Belum ada data instansi."))
+                : DataTable(
+                    columnSpacing: 20,
+                    columns: [
+                      DataColumn(label: Text('Nama')),
+                      DataColumn(label: Text('Lokasi')),
+                      DataColumn(label: Text('Action')),
+                    ],
+                    rows: instansiList.map((item) {
+                      return DataRow(
+                        cells: [
+                          DataCell(Text(item['nama'] ?? '')),
+                          DataCell(Text(item['lokasi'] ?? '')),
+                          DataCell(
+                            IconButton(
+                              icon: Icon(Icons.remove_red_eye_outlined,
+                                  color: Colors.blue),
+                              onPressed: () {
+                                // Tampilkan halaman detail instansi jika sudah tersedia
+                              },
+                            ),
+                          ),
+                        ],
+                      );
+                    }).toList(),
+                  ),
           )
         ],
       ),
     );
+  }
+
+  @override
+  void dispose() {
+    db.close();
+    super.dispose();
   }
 }
