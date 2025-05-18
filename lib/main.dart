@@ -1,8 +1,8 @@
 // main.dart - Entry point untuk STAMP Pertamina
 
 import 'package:flutter/material.dart';
-import 'screens/individu_page.dart';
-import 'screens/instansi_page.dart';
+import 'screens/individu_index.dart';
+import 'screens/instansi_index.dart';
 import 'screens/manage_page.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/header_topbar.dart';
@@ -41,9 +41,9 @@ class _MainLayoutState extends State<MainLayout> {
     // index 0 - Dashboard
     Center(child: Text("Dashboard", style: TextStyle(fontSize: 24))),
     // index 1 - Instansi
-    InstansiPage(),
+    InstansiIndexPage(),
     // index 2 - Individu
-    IndividuPage(),
+    IndividuIndexPage(),
     // index 3 - Timeline
     Center(child: Text("Timeline", style: TextStyle(fontSize: 24))),
     // index 4 - Bookmarks
