@@ -1,36 +1,40 @@
-// header_topbar.dart — Custom Top AppBar ala STAMP
+// header_topbar.dart
 import 'package:flutter/material.dart';
 
 class HeaderTopBar extends StatelessWidget implements PreferredSizeWidget {
   final String title;
   final String userName;
   final String userRole;
-  final String avatarAsset;
+  final bool showMenuButton;
 
-  const HeaderTopBar({
-    super.key,
+  HeaderTopBar({
     required this.title,
     required this.userName,
     required this.userRole,
-    this.avatarAsset = 'assets/avatar.png',
+    this.showMenuButton = true,
   });
+
+  @override
+  Size get preferredSize => Size.fromHeight(64);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
-      backgroundColor: Colors.white,
       elevation: 0,
+      backgroundColor: Colors.white,
       automaticallyImplyLeading: false,
-      titleSpacing: 16,
-      toolbarHeight: 72,
-      title: Text(
-        title,
-        style: TextStyle(
-          color: Colors.black87,
-          fontSize: 22,
-          fontWeight: FontWeight.w600,
-        ),
-      ),
+      leading: showMenuButton
+          ? IconButton(
+              icon: Icon(Icons.menu, color: Colors.black87),
+              onPressed: () {
+                Scaffold.of(context).openDrawer();
+              },
+            )
+          : null,
+      title: Text(title,
+          style: TextStyle(
+              fontSize: 20, color: Colors.black, fontWeight: FontWeight.bold)),
+      centerTitle: false,
       actions: [
         Padding(
           padding: const EdgeInsets.only(right: 16),
@@ -40,35 +44,21 @@ class HeaderTopBar extends StatelessWidget implements PreferredSizeWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
-                  Text(
-                    userName,
-                    style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  Text(
-                    userRole,
-                    style: TextStyle(
-                      fontSize: 12,
-                      color: Colors.black54,
-                    ),
-                  )
+                  Text(userName,
+                      style: TextStyle(
+                          fontWeight: FontWeight.bold, color: Colors.black)),
+                  Text(userRole,
+                      style: TextStyle(fontSize: 12, color: Colors.grey)),
                 ],
               ),
               SizedBox(width: 12),
               CircleAvatar(
-                radius: 20,
-                backgroundImage: AssetImage(avatarAsset),
-              ),
-              SizedBox(width: 12)
+                backgroundImage: AssetImage('assets/avatar.png'),
+              )
             ],
           ),
         )
       ],
     );
   }
-
-  @override
-  Size get preferredSize => Size.fromHeight(72);
 }
