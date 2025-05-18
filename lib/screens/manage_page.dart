@@ -42,25 +42,43 @@ class _ManagePageState extends State<ManagePage> {
   }
 
   Future<void> restoreData(String password) async {
-    final input = await getApplicationDocumentsDirectory();
-    final backupFile = File(join(input.path, 'backup_stamp.enc'));
-    if (!await backupFile.exists()) {
-      setState(() => status = "File backup tidak ditemukan.");
-      return;
+    try {
+      final input = await getApplicationDocumentsDirectory();
+      final backupFile = File(join(input.path, 'backup_stamp.enc'));
+      if (!await backupFile.exists()) {
+        setState(() => status = "File backup tidak ditemukan.");
+        return;
+      }
+
+      final encBytes = await backupFile.readAsBytes();
+      final key = encrypt.Key.fromUtf8(password.padRight(32, '0'));
+      final iv = encrypt.IV.fromLength(16);
+      final encrypter = encrypt.Encrypter(encrypt.AES(key));
+
+      final decrypted = encrypter.decryptBytes(
+        encrypt.Encrypted(encBytes),
+        iv: iv,
+      );
+
+      final path = await _dbPath;
+
+      // tutup DB sebelum restore
+      final db = await openDatabase(path);
+      await db.close();
+
+      // replace db file
+      await File(path).writeAsBytes(decrypted);
+
+      // opsional: buka ulang DB dan cek
+      final newDb = await openDatabase(path);
+      final count = Sqflite.firstIntValue(
+          await newDb.rawQuery('SELECT COUNT(*) FROM instansi'))!;
+      await newDb.close();
+
+      setState(() => status = "Restore selesai. Instansi ter-load: $count");
+    } catch (e) {
+      setState(() => status = "Gagal restore: $e");
     }
-    final encBytes = await backupFile.readAsBytes();
-
-    final key = encrypt.Key.fromUtf8(password.padRight(32, '0'));
-    final iv = encrypt.IV.fromLength(16);
-    final encrypter = encrypt.Encrypter(encrypt.AES(key));
-    final decrypted = encrypter.decryptBytes(
-      encrypt.Encrypted(encBytes),
-      iv: iv,
-    );
-
-    final path = await _dbPath;
-    await File(path).writeAsBytes(decrypted);
-    setState(() => status = "Restore selesai dari backup.");
   }
 
   @override
