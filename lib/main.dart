@@ -31,17 +31,24 @@ class MainLayout extends StatefulWidget {
 
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
+
   final List<Widget> _pages = [
     IndividuPage(),
     InstansiPage(),
     ManagePage(),
   ];
 
+  final List<String> _pageTitles = [
+    "Individu",
+    "Instansi",
+    "Manajemen",
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: HeaderTopBar(
-        title: "Instansi",
+        title: _pageTitles[_selectedIndex],
         userName: "Irwan Phan",
         userRole: "Market Analyst",
       ),
