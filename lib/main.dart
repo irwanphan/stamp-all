@@ -32,15 +32,35 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
 
+  Widget placeholder(String label) => Center(
+        child: Text(label,
+            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
+      );
+
   final List<Widget> _pages = [
-    IndividuPage(),
+    // index 0 - Dashboard
+    Center(child: Text("Dashboard", style: TextStyle(fontSize: 24))),
+    // index 1 - Instansi
     InstansiPage(),
+    // index 2 - Individu
+    IndividuPage(),
+    // index 3 - Timeline
+    Center(child: Text("Timeline", style: TextStyle(fontSize: 24))),
+    // index 4 - Bookmarks
+    Center(child: Text("Bookmarks", style: TextStyle(fontSize: 24))),
+    // index 5 - Pengguna
+    Center(child: Text("Pengguna", style: TextStyle(fontSize: 24))),
+    // index 6 - Manajemen
     ManagePage(),
   ];
 
   final List<String> _pageTitles = [
-    "Individu",
+    "Dashboard",
     "Instansi",
+    "Individu",
+    "Timeline",
+    "Bookmarks",
+    "Pengguna",
     "Manajemen",
   ];
 
