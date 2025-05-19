@@ -2,7 +2,7 @@
 import 'dart:io';
 
 import 'package:flutter/material.dart';
-// import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
 import 'package:sqflite/sqflite.dart';
@@ -78,13 +78,16 @@ class _InstansiFormPageState extends State<InstansiFormPage> {
     Navigator.pop(context);
   }
 
-  // Future<void> _pickImage() async {
-  //   final picker = ImagePicker();
-  //   final picked = await picker.pickImage(source: ImageSource.gallery);
-  //   if (picked != null) {
-  //     setState(() => _foto = File(picked.path));
-  //   }
-  // }
+  Future<void> _pickImage() async {
+    final result = await FilePicker.platform.pickFiles(
+      type: FileType.image,
+    );
+    if (result != null && result.files.single.path != null) {
+      setState(() {
+        _foto = File(result.files.single.path!);
+      });
+    }
+  }
 
   @override
   void initState() {
@@ -133,10 +136,10 @@ class _InstansiFormPageState extends State<InstansiFormPage> {
               SizedBox(height: 16),
               Row(
                 children: [
-                  // ElevatedButton(
-                  //   onPressed: _pickImage,
-                  //   child: Text("Pilih Foto"),
-                  // ),
+                  ElevatedButton(
+                    onPressed: _pickImage,
+                    child: Text("Pilih Foto"),
+                  ),
                   SizedBox(width: 10),
                   if (_foto != null) Text(p.basename(_foto!.path)),
                 ],
