@@ -1,10 +1,9 @@
-individu index dart
-
 import 'package:flutter/material.dart';
 import 'package:sqflite/sqflite.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import 'individu_form.dart';
+
 
 class IndividuIndexPage extends StatefulWidget {
   @override
@@ -70,14 +69,14 @@ class _IndividuIndexPageState extends State<IndividuIndexPage> {
                 Text("Daftar Individu",
                     style: Theme.of(context).textTheme.titleLarge),
                 ElevatedButton(
-                  onPressed: () {
+                onPressed: () {
                     Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => IndividuFormPage()),
+                    context,
+                    MaterialPageRoute(builder: (_) => IndividuFormPage()),
                     ).then((_) => loadIndividu());
-                  },
+                },
                   child: Text("Input Baru"),
-                )
+                ),
               ],
             ),
             SizedBox(height: 16),
@@ -99,8 +98,7 @@ class _IndividuIndexPageState extends State<IndividuIndexPage> {
                               icon: Icon(Icons.remove_red_eye_outlined,
                                   color: Colors.blue),
                               onPressed: () {
-                                // Navigasi ke halaman detail
-                                // Navigator.push(...);
+
                               },
                             ),
                           ),
