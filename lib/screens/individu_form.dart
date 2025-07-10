@@ -43,7 +43,33 @@ class _IndividuFormPageState extends State<IndividuFormPage> {
 
   Future<void> initDB() async {
     final path = await _dbPath;
-    db = await databaseFactory.openDatabase(path);
+    db = await databaseFactoryFfi.openDatabase(path);
+
+    await db.execute('''
+      CREATE TABLE IF NOT EXISTS individu (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        nama TEXT,
+        jabatan TEXT,
+        leveling TEXT,
+        instansi TEXT,
+        nama_panggilan TEXT,
+        tempat_lahir TEXT,
+        tanggal_lahir TEXT,
+        no_hp TEXT,
+        email TEXT,
+        status TEXT,
+        alamat TEXT,
+        agama TEXT,
+        dapil TEXT,
+        fraksi TEXT,
+        hobi TEXT,
+        folder_foto TEXT,
+        file_foto TEXT,
+        jumlah_interaksi INTEGER,
+        tanggal_terakhir_kontak TEXT,
+        jenis_kelamin TEXT
+      )
+  ''');
   }
 
   Future<void> simpanIndividu() async {

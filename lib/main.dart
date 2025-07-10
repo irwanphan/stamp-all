@@ -1,15 +1,13 @@
-// main.dart - Entry point untuk STAMP Pertamina
-
 import 'package:flutter/material.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
+import 'screens/dashboard_page.dart';
 import 'screens/individu_index.dart';
 import 'screens/instansi_index.dart';
 import 'screens/manage_page.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/header_topbar.dart';
-import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 void main() {
-  // Inisialisasi FFI sebelum runApp
   sqfliteFfiInit();
   databaseFactory = databaseFactoryFfi;
 
@@ -39,26 +37,14 @@ class MainLayout extends StatefulWidget {
 class _MainLayoutState extends State<MainLayout> {
   int _selectedIndex = 0;
 
-  Widget placeholder(String label) => Center(
-        child: Text(label,
-            style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold)),
-      );
-
   final List<Widget> _pages = [
-    // index 0 - Dashboard
-    Center(child: Text("Dashboard", style: TextStyle(fontSize: 24))),
-    // index 1 - Instansi
-    InstansiIndexPage(),
-    // index 2 - Individu
-    IndividuIndexPage(),
-    // index 3 - Timeline
+    DashboardPage(), // index 0 - Dashboard
+    InstansiIndexPage(), // index 1 - Instansi
+    IndividuIndexPage(), // index 2 - Individu
     Center(child: Text("Timeline", style: TextStyle(fontSize: 24))),
-    // index 4 - Bookmarks
     Center(child: Text("Bookmarks", style: TextStyle(fontSize: 24))),
-    // index 5 - Pengguna
     Center(child: Text("Pengguna", style: TextStyle(fontSize: 24))),
-    // index 6 - Manajemen
-    ManagePage(),
+    ManagePage(), // index 6 - Manajemen
   ];
 
   final List<String> _pageTitles = [

@@ -1,6 +1,5 @@
-// instansi_index.dart - Menampilkan data dari SQLite dalam bentuk tabel dengan tombol detail
 import 'package:flutter/material.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
 import 'instansi_form.dart';
@@ -22,26 +21,28 @@ class _InstansiIndexPageState extends State<InstansiIndexPage> {
 
   Future<void> initDB() async {
     final path = await _dbPath;
-    db = await openDatabase(
+    db = await databaseFactoryFfi.openDatabase(
       path,
-      version: 1,
-      onCreate: (Database db, int version) async {
-        await db.execute('''
-          CREATE TABLE instansi (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nama TEXT,
-            lokasi TEXT,
-            kategori TEXT,
-            email TEXT,
-            website TEXT,
-            kontak TEXT,
-            pic TEXT,
-            deskripsi TEXT,
-            foto TEXT,
-            koordinat TEXT
-          )
-        ''');
-      },
+      options: OpenDatabaseOptions(
+        version: 1,
+        onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE instansi (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              nama TEXT,
+              lokasi TEXT,
+              kategori TEXT,
+              email TEXT,
+              website TEXT,
+              kontak TEXT,
+              pic TEXT,
+              deskripsi TEXT,
+              foto TEXT,
+              koordinat TEXT
+            )
+          ''');
+        },
+      ),
     );
     loadInstansi();
   }
@@ -54,7 +55,15 @@ class _InstansiIndexPageState extends State<InstansiIndexPage> {
   @override
   void initState() {
     super.initState();
+    sqfliteFfiInit(); // Penting!
+    databaseFactory = databaseFactoryFfi;
     initDB();
+  }
+
+  @override
+  void dispose() {
+    db.close();
+    super.dispose();
   }
 
   @override
@@ -73,7 +82,7 @@ class _InstansiIndexPageState extends State<InstansiIndexPage> {
                 onPressed: () {
                   Navigator.push(
                     context,
-                    MaterialPageRoute(builder: (context) => InstansiFormPage()),
+                    MaterialPageRoute(builder: (_) => InstansiFormPage()),
                   ).then((_) => loadInstansi());
                 },
                 child: Text("Input Baru"),
@@ -84,46 +93,42 @@ class _InstansiIndexPageState extends State<InstansiIndexPage> {
           Expanded(
             child: instansiList.isEmpty
                 ? Center(child: Text("Belum ada data instansi."))
-                : DataTable(
-                    columnSpacing: 20,
-                    columns: [
-                      DataColumn(label: Text('Nama')),
-                      DataColumn(label: Text('Lokasi')),
-                      DataColumn(label: Text('Action')),
-                    ],
-                    rows: instansiList.map((item) {
-                      return DataRow(
-                        cells: [
-                          DataCell(Text(item['nama'] ?? '')),
-                          DataCell(Text(item['lokasi'] ?? '')),
-                          DataCell(
-                            IconButton(
-                              icon: Icon(Icons.remove_red_eye_outlined,
-                                  color: Colors.blue),
-                              onPressed: () {
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) =>
-                                        InstansiDetailPage(instansi: item),
-                                  ),
-                                );
-                              },
+                : SingleChildScrollView(
+                    scrollDirection: Axis.horizontal,
+                    child: DataTable(
+                      columns: const [
+                        DataColumn(label: Text('Nama')),
+                        DataColumn(label: Text('Lokasi')),
+                        DataColumn(label: Text('Aksi')),
+                      ],
+                      rows: instansiList.map((item) {
+                        return DataRow(
+                          cells: [
+                            DataCell(Text(item['nama'] ?? '')),
+                            DataCell(Text(item['lokasi'] ?? '')),
+                            DataCell(
+                              IconButton(
+                                icon: Icon(Icons.remove_red_eye_outlined,
+                                    color: Colors.blue),
+                                onPressed: () {
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (_) =>
+                                          InstansiDetailPage(instansi: item),
+                                    ),
+                                  );
+                                },
+                              ),
                             ),
-                          ),
-                        ],
-                      );
-                    }).toList(),
+                          ],
+                        );
+                      }).toList(),
+                    ),
                   ),
           )
         ],
       ),
     );
-  }
-
-  @override
-  void dispose() {
-    db.close();
-    super.dispose();
   }
 }

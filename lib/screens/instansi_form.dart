@@ -1,11 +1,9 @@
-// instansi_form.dart - Formulir untuk input data instansi lengkap
 import 'dart:io';
-
 import 'package:flutter/material.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:path/path.dart' as p;
 import 'package:path_provider/path_provider.dart';
-import 'package:sqflite/sqflite.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
 class InstansiFormPage extends StatefulWidget {
   @override
@@ -35,26 +33,28 @@ class _InstansiFormPageState extends State<InstansiFormPage> {
 
   Future<void> initDB() async {
     final path = await _dbPath;
-    db = await openDatabase(
+    db = await databaseFactoryFfi.openDatabase(
       path,
-      version: 1,
-      onCreate: (Database db, int version) async {
-        await db.execute('''
-          CREATE TABLE instansi (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            nama TEXT,
-            lokasi TEXT,
-            kategori TEXT,
-            email TEXT,
-            website TEXT,
-            kontak TEXT,
-            pic TEXT,
-            deskripsi TEXT,
-            foto TEXT,
-            koordinat TEXT
-          )
-        ''');
-      },
+      options: OpenDatabaseOptions(
+        version: 1,
+        onCreate: (db, version) async {
+          await db.execute('''
+            CREATE TABLE IF NOT EXISTS instansi (
+              id INTEGER PRIMARY KEY AUTOINCREMENT,
+              nama TEXT,
+              lokasi TEXT,
+              kategori TEXT,
+              email TEXT,
+              website TEXT,
+              kontak TEXT,
+              pic TEXT,
+              deskripsi TEXT,
+              foto TEXT,
+              koordinat TEXT
+            )
+          ''');
+        },
+      ),
     );
   }
 
@@ -79,19 +79,17 @@ class _InstansiFormPageState extends State<InstansiFormPage> {
   }
 
   Future<void> _pickImage() async {
-    final result = await FilePicker.platform.pickFiles(
-      type: FileType.image,
-    );
+    final result = await FilePicker.platform.pickFiles(type: FileType.image);
     if (result != null && result.files.single.path != null) {
-      setState(() {
-        _foto = File(result.files.single.path!);
-      });
+      setState(() => _foto = File(result.files.single.path!));
     }
   }
 
   @override
   void initState() {
     super.initState();
+    sqfliteFfiInit(); // Penting untuk FFI
+    databaseFactory = databaseFactoryFfi; // Pastikan factory diset
     initDB();
   }
 
