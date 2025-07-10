@@ -6,8 +6,15 @@ import 'screens/instansi_index.dart';
 import 'screens/manage_page.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/header_topbar.dart';
+import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 
-void main() => runApp(MyApp());
+void main() {
+  // Inisialisasi FFI sebelum runApp
+  sqfliteFfiInit();
+  databaseFactory = databaseFactoryFfi;
+
+  runApp(MyApp());
+}
 
 class MyApp extends StatelessWidget {
   @override
