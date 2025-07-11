@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart';
+import 'package:pie_chart/pie_chart.dart';
 
 class DashboardPage extends StatefulWidget {
   @override
@@ -20,6 +21,10 @@ class _DashboardPageState extends State<DashboardPage> {
   int lowHigh = 0;
   int lowLow = 0;
 
+  int highInfluence = 0;
+  int highInterest = 0;
+  List<Map<String, dynamic>> lastInteraksi = [];
+
   Future<String> get _dbPath async {
     final dir = await getApplicationDocumentsDirectory();
     return join(dir.path, "stamp.db");
@@ -30,6 +35,7 @@ class _DashboardPageState extends State<DashboardPage> {
     db = await databaseFactoryFfi.openDatabase(path);
     await loadStats();
     await loadStakeholderMatrix();
+    await loadInteractionStatus();
   }
 
   Future<void> loadStats() async {
@@ -86,7 +92,6 @@ class _DashboardPageState extends State<DashboardPage> {
         GROUP BY interest, influence
       ''');
 
-      // Reset dulu
       highHigh = 0;
       highLow = 0;
       lowHigh = 0;
@@ -117,6 +122,27 @@ class _DashboardPageState extends State<DashboardPage> {
     setState(() {});
   }
 
+  Future<void> loadInteractionStatus() async {
+    try {
+      final inf = await db.rawQuery(
+          "SELECT COUNT(*) as total FROM interaksi WHERE influence = 'High'");
+      final intt = await db.rawQuery(
+          "SELECT COUNT(*) as total FROM interaksi WHERE interest = 'High'");
+      final recent = await db.rawQuery(
+          'SELECT * FROM interaksi ORDER BY tanggal_interaksi DESC LIMIT 5');
+
+      highInfluence = inf.first['total'] as int? ?? 0;
+      highInterest = intt.first['total'] as int? ?? 0;
+      lastInteraksi = recent;
+    } catch (_) {
+      highInfluence = 0;
+      highInterest = 0;
+      lastInteraksi = [];
+    }
+
+    setState(() {});
+  }
+
   @override
   void initState() {
     super.initState();
@@ -131,13 +157,8 @@ class _DashboardPageState extends State<DashboardPage> {
     super.dispose();
   }
 
-  Widget buildStatCard(
-    String title,
-    int value,
-    IconData icon,
-    Color color, {
-    String? subtitle,
-  }) {
+  Widget buildStatCard(String title, int value, IconData icon, Color color,
+      {String? subtitle}) {
     return Card(
       elevation: 2,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
@@ -148,35 +169,33 @@ class _DashboardPageState extends State<DashboardPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
-              backgroundColor: color.withOpacity(0.1),
-              child: Icon(icon, color: color),
-            ),
+                backgroundColor: color.withOpacity(0.1),
+                child: Icon(icon, color: color)),
             SizedBox(width: 16),
             Expanded(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(title,
-                      style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.w600,
-                          color: Colors.black87)),
-                  if (subtitle != null) ...[
-                    SizedBox(height: 2),
-                    Text(subtitle,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(title,
                         style: TextStyle(
-                            fontSize: 13,
-                            fontWeight: FontWeight.w400,
-                            color: Colors.black54)),
-                  ],
-                  SizedBox(height: 8),
-                  Text(value.toString(),
-                      style: TextStyle(
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.black)),
-                ],
-              ),
+                            fontSize: 16,
+                            fontWeight: FontWeight.w600,
+                            color: Colors.black87)),
+                    if (subtitle != null) ...[
+                      SizedBox(height: 2),
+                      Text(subtitle,
+                          style: TextStyle(
+                              fontSize: 13,
+                              fontWeight: FontWeight.w400,
+                              color: Colors.black54)),
+                    ],
+                    SizedBox(height: 8),
+                    Text(value.toString(),
+                        style: TextStyle(
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.black)),
+                  ]),
             ),
           ],
         ),
@@ -184,24 +203,152 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
+  Widget buildInteractionStatusSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Interaction Status",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        SizedBox(height: 4),
+        Text(
+            "Interaksi dengan stakeholder yang bersifat high influence dan high interest"),
+        SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: Column(
+                children: [
+                  Text("High Influence",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  SizedBox(height: 8),
+                  PieChart(
+                    dataMap: {
+                      "High": highInfluence.toDouble(),
+                      "Other": (totalInteraksi - highInfluence).toDouble(),
+                    },
+                    chartRadius: 100,
+                    chartType: ChartType.ring,
+                    ringStrokeWidth: 14,
+                    colorList: [Colors.teal, Colors.grey.shade300],
+                    chartValuesOptions:
+                        ChartValuesOptions(showChartValues: false),
+                    legendOptions: LegendOptions(showLegends: false),
+                    centerText: "$highInfluence",
+                  ),
+                ],
+              ),
+            ),
+            SizedBox(width: 24),
+            Expanded(
+              child: Column(
+                children: [
+                  Text("High Interest",
+                      style: TextStyle(fontWeight: FontWeight.bold)),
+                  SizedBox(height: 8),
+                  PieChart(
+                    dataMap: {
+                      "High": highInterest.toDouble(),
+                      "Other": (totalInteraksi - highInterest).toDouble(),
+                    },
+                    chartRadius: 100,
+                    chartType: ChartType.ring,
+                    ringStrokeWidth: 14,
+                    colorList: [Colors.orange, Colors.grey.shade300],
+                    chartValuesOptions:
+                        ChartValuesOptions(showChartValues: false),
+                    legendOptions: LegendOptions(showLegends: false),
+                    centerText: "$highInterest",
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  Widget buildLastInteractionTable() {
+    Widget colored(String status) {
+      Color color;
+      switch (status) {
+        case 'Completed':
+          color = Colors.green;
+          break;
+        case 'Delayed':
+          color = Colors.orange;
+          break;
+        case 'At risk':
+          color = Colors.red;
+          break;
+        default:
+          color = Colors.black87;
+      }
+      return Text(status,
+          style: TextStyle(color: color, fontWeight: FontWeight.bold));
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text("Last Interaction",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        SizedBox(height: 12),
+        Table(
+          border: TableBorder.all(color: Colors.grey.shade300),
+          columnWidths: {
+            0: FlexColumnWidth(3),
+            1: FlexColumnWidth(2),
+            2: FlexColumnWidth(2),
+            3: FlexColumnWidth(2)
+          },
+          children: [
+            TableRow(
+              decoration: BoxDecoration(color: Colors.grey.shade200),
+              children: ["Nama", "Contact", "Tanggal", "Status"]
+                  .map((t) => Padding(
+                      padding: EdgeInsets.all(8),
+                      child: Text(t,
+                          style: TextStyle(fontWeight: FontWeight.bold))))
+                  .toList(),
+            ),
+            ...lastInteraksi.map((e) => TableRow(
+                  children: [
+                    Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Text(e['nama'] ?? '-')),
+                    Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Text(e['contact_person'] ?? '-')),
+                    Padding(
+                        padding: EdgeInsets.all(8),
+                        child: Text(e['tanggal_interaksi'] ?? '-')),
+                    Padding(
+                        padding: EdgeInsets.all(8),
+                        child: colored(e['status'] ?? '-')),
+                  ],
+                )),
+          ],
+        ),
+      ],
+    );
+  }
+
   Widget buildMatrixBox(String label, int count, Color color) {
     return Container(
       height: 100,
-      decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(6),
-      ),
+      decoration:
+          BoxDecoration(color: color, borderRadius: BorderRadius.circular(6)),
       child: Center(
         child: ListTile(
-          title: Text(
-            label,
-            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-          ),
-          trailing: Text(
-            count.toString(),
-            style: TextStyle(
-                fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
-          ),
+          title: Text(label,
+              style:
+                  TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          trailing: Text('$count',
+              style: TextStyle(
+                  fontSize: 24,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white)),
         ),
       ),
     );
@@ -217,28 +364,24 @@ class _DashboardPageState extends State<DashboardPage> {
         Row(
           children: [
             Expanded(
-              child: buildMatrixBox(
-                  "High Interest\nLow Influence", highLow, Colors.lightBlue),
-            ),
+                child: buildMatrixBox(
+                    "High Interest\nLow Influence", highLow, Colors.lightBlue)),
             SizedBox(width: 16),
             Expanded(
-              child: buildMatrixBox("High Interest\nHigh Influence", highHigh,
-                  Colors.blue.shade800),
-            ),
+                child: buildMatrixBox("High Interest\nHigh Influence", highHigh,
+                    Colors.blue.shade800)),
           ],
         ),
         SizedBox(height: 16),
         Row(
           children: [
             Expanded(
-              child: buildMatrixBox(
-                  "Low Interest\nLow Influence", lowLow, Colors.redAccent),
-            ),
+                child: buildMatrixBox(
+                    "Low Interest\nLow Influence", lowLow, Colors.redAccent)),
             SizedBox(width: 16),
             Expanded(
-              child: buildMatrixBox(
-                  "Low Interest\nHigh Influence", lowHigh, Colors.red),
-            ),
+                child: buildMatrixBox(
+                    "Low Interest\nHigh Influence", lowHigh, Colors.red)),
           ],
         ),
       ],
@@ -267,37 +410,25 @@ class _DashboardPageState extends State<DashboardPage> {
               crossAxisSpacing: 16,
               physics: NeverScrollableScrollPhysics(),
               children: [
-                buildStatCard(
-                  "Total StakeHolders",
-                  totalIndividu,
-                  Icons.people_alt_outlined,
-                  Colors.green,
-                  subtitle: "Jumlah Individu yang berinteraksi",
-                ),
-                buildStatCard(
-                  "Total Instansi",
-                  totalInstansi,
-                  Icons.apartment,
-                  Colors.blue,
-                  subtitle: "Jumlah instansi yang aktif dan non-aktif",
-                ),
-                buildStatCard(
-                  "Total Interactions",
-                  totalInteraksi,
-                  Icons.connect_without_contact,
-                  Colors.deepOrange,
-                  subtitle: "Jumlah interaksi dengan stakeholder",
-                ),
-                buildStatCard(
-                  "Stakeholder aktif",
-                  stakeholderAktif,
-                  Icons.timeline_outlined,
-                  Colors.purple,
-                  subtitle:
-                      "Interaksi terjadi dalam kurun waktu 30 hari terakhir",
-                ),
+                buildStatCard("Total StakeHolders", totalIndividu,
+                    Icons.people_alt_outlined, Colors.green,
+                    subtitle: "Jumlah Individu yang berinteraksi"),
+                buildStatCard("Total Instansi", totalInstansi, Icons.apartment,
+                    Colors.blue,
+                    subtitle: "Jumlah instansi yang aktif dan non-aktif"),
+                buildStatCard("Total Interactions", totalInteraksi,
+                    Icons.connect_without_contact, Colors.deepOrange,
+                    subtitle: "Jumlah interaksi dengan stakeholder"),
+                buildStatCard("Stakeholder aktif", stakeholderAktif,
+                    Icons.timeline_outlined, Colors.purple,
+                    subtitle:
+                        "Interaksi terjadi dalam kurun waktu 30 hari terakhir"),
               ],
             ),
+            SizedBox(height: 24),
+            buildInteractionStatusSection(),
+            SizedBox(height: 24),
+            buildLastInteractionTable(),
             SizedBox(height: 24),
             buildStakeholderMatrixCard(),
           ],

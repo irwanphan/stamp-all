@@ -88,8 +88,8 @@ class _InstansiFormPageState extends State<InstansiFormPage> {
   @override
   void initState() {
     super.initState();
-    sqfliteFfiInit(); // Penting untuk FFI
-    databaseFactory = databaseFactoryFfi; // Pastikan factory diset
+    sqfliteFfiInit();
+    databaseFactory = databaseFactoryFfi;
     initDB();
   }
 

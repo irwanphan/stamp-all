@@ -55,7 +55,7 @@ class _InstansiIndexPageState extends State<InstansiIndexPage> {
   @override
   void initState() {
     super.initState();
-    sqfliteFfiInit(); // Penting!
+    sqfliteFfiInit();
     databaseFactory = databaseFactoryFfi;
     initDB();
   }
