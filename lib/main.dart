@@ -3,6 +3,7 @@ import 'package:sqflite_common_ffi/sqflite_ffi.dart';
 import 'screens/dashboard_page.dart';
 import 'screens/individu_index.dart';
 import 'screens/instansi_index.dart';
+import 'screens/interaksi_index.dart';
 import 'screens/manage_page.dart';
 import 'widgets/sidebar.dart';
 import 'widgets/header_topbar.dart';
@@ -41,6 +42,7 @@ class _MainLayoutState extends State<MainLayout> {
     DashboardPage(), // index 0 - Dashboard
     InstansiIndexPage(), // index 1 - Instansi
     IndividuIndexPage(), // index 2 - Individu
+    InteraksiIndexPage(), // index 3 - Interaksi
     Center(child: Text("Timeline", style: TextStyle(fontSize: 24))),
     Center(child: Text("Bookmarks", style: TextStyle(fontSize: 24))),
     Center(child: Text("Pengguna", style: TextStyle(fontSize: 24))),
@@ -50,7 +52,8 @@ class _MainLayoutState extends State<MainLayout> {
   final List<String> _pageTitles = [
     "Dashboard",
     "Instansi",
-    "Individu",
+    "Individu/Stakeholder",
+    "Interaksi",
     "Timeline",
     "Bookmarks",
     "Pengguna",

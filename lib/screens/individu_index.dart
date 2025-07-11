@@ -86,7 +86,7 @@ class _IndividuIndexPageState extends State<IndividuIndexPage> {
           flutter.Row(
             mainAxisAlignment: flutter.MainAxisAlignment.spaceBetween,
             children: [
-              flutter.Text("Daftar Individu",
+              flutter.Text("Daftar Individu/Stakeholder",
                   style: flutter.Theme.of(flutterContext).textTheme.titleLarge),
               flutter.ElevatedButton(
                 onPressed: () {
@@ -104,7 +104,7 @@ class _IndividuIndexPageState extends State<IndividuIndexPage> {
           flutter.Expanded(
             child: individuList.isEmpty
                 ? flutter.Center(
-                    child: flutter.Text("Belum ada data individu."))
+                    child: flutter.Text("Belum ada data individu/stakeholder."))
                 : flutter.SingleChildScrollView(
                     scrollDirection: flutter.Axis.horizontal,
                     child: flutter.DataTable(

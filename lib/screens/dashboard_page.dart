@@ -13,7 +13,12 @@ class _DashboardPageState extends State<DashboardPage> {
   int totalInstansi = 0;
   int totalIndividu = 0;
   int totalInteraksi = 0;
-  List<Map<String, dynamic>> individuList = [];
+  int stakeholderAktif = 0;
+
+  int highHigh = 0;
+  int highLow = 0;
+  int lowHigh = 0;
+  int lowLow = 0;
 
   Future<String> get _dbPath async {
     final dir = await getApplicationDocumentsDirectory();
@@ -24,7 +29,7 @@ class _DashboardPageState extends State<DashboardPage> {
     final path = await _dbPath;
     db = await databaseFactoryFfi.openDatabase(path);
     await loadStats();
-    await loadIndividuList();
+    await loadStakeholderMatrix();
   }
 
   Future<void> loadStats() async {
@@ -45,27 +50,70 @@ class _DashboardPageState extends State<DashboardPage> {
     }
 
     try {
-      final interaksiResult = await db
-          .rawQuery('SELECT SUM(jumlah_interaksi) as total FROM individu');
+      final interaksiResult =
+          await db.rawQuery('SELECT COUNT(*) as total FROM interaksi');
       totalInteraksi = interaksiResult.first['total'] as int? ?? 0;
     } catch (_) {
       totalInteraksi = 0;
     }
 
+    try {
+      final thirtyDaysAgo = DateTime.now().subtract(Duration(days: 30));
+      final formattedDate = thirtyDaysAgo.toIso8601String().split('T').first;
+
+      final aktifResult = await db.rawQuery('''
+        SELECT COUNT(*) as count
+        FROM individu
+        WHERE tanggal_terakhir_kontak IS NOT NULL
+          AND DATE(tanggal_terakhir_kontak) >= ?
+      ''', [formattedDate]);
+
+      stakeholderAktif = aktifResult.first['count'] as int? ?? 0;
+    } catch (_) {
+      stakeholderAktif = 0;
+    }
+
     setState(() {});
   }
 
-  Future<void> loadIndividuList() async {
+  Future<void> loadStakeholderMatrix() async {
     try {
-      individuList = await db.rawQuery('''
-        SELECT nama, instansi, jumlah_interaksi
-        FROM individu
-        ORDER BY jumlah_interaksi DESC
-        LIMIT 10
+      final result = await db.rawQuery('''
+        SELECT interest, influence, COUNT(*) as count
+        FROM interaksi
+        WHERE interest IN ('High', 'Low')
+          AND influence IN ('High', 'Low')
+        GROUP BY interest, influence
       ''');
+
+      // Reset dulu
+      highHigh = 0;
+      highLow = 0;
+      lowHigh = 0;
+      lowLow = 0;
+
+      for (final row in result) {
+        final interest = row['interest'];
+        final influence = row['influence'];
+        final count = row['count'] as int;
+
+        if (interest == 'High' && influence == 'High') {
+          highHigh = count;
+        } else if (interest == 'High' && influence == 'Low') {
+          highLow = count;
+        } else if (interest == 'Low' && influence == 'High') {
+          lowHigh = count;
+        } else if (interest == 'Low' && influence == 'Low') {
+          lowLow = count;
+        }
+      }
     } catch (_) {
-      individuList = [];
+      highHigh = 0;
+      highLow = 0;
+      lowHigh = 0;
+      lowLow = 0;
     }
+
     setState(() {});
   }
 
@@ -83,35 +131,52 @@ class _DashboardPageState extends State<DashboardPage> {
     super.dispose();
   }
 
-  Widget buildStatCard(String title, int value, IconData icon, Color color) {
+  Widget buildStatCard(
+    String title,
+    int value,
+    IconData icon,
+    Color color, {
+    String? subtitle,
+  }) {
     return Card(
       elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
       color: Colors.white,
       child: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
         child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             CircleAvatar(
               backgroundColor: color.withOpacity(0.1),
               child: Icon(icon, color: color),
             ),
             SizedBox(width: 16),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(title,
-                    style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.w500,
-                        color: Colors.grey[800])),
-                SizedBox(height: 4),
-                Text(value.toString(),
-                    style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.black)),
-              ],
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                      style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.w600,
+                          color: Colors.black87)),
+                  if (subtitle != null) ...[
+                    SizedBox(height: 2),
+                    Text(subtitle,
+                        style: TextStyle(
+                            fontSize: 13,
+                            fontWeight: FontWeight.w400,
+                            color: Colors.black54)),
+                  ],
+                  SizedBox(height: 8),
+                  Text(value.toString(),
+                      style: TextStyle(
+                          fontSize: 24,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black)),
+                ],
+              ),
             ),
           ],
         ),
@@ -119,55 +184,64 @@ class _DashboardPageState extends State<DashboardPage> {
     );
   }
 
-  Widget buildIndividuCard() {
-    return Card(
-      elevation: 2,
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-      color: Colors.white,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text("Daftar Individu Teratas",
-                style: TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.w600,
-                    color: Colors.grey[800])),
-            Divider(),
-            individuList.isEmpty
-                ? Center(child: Text("Belum ada data individu."))
-                : ListView.separated(
-                    shrinkWrap: true,
-                    physics: NeverScrollableScrollPhysics(),
-                    itemCount: individuList.length,
-                    separatorBuilder: (_, __) => Divider(),
-                    itemBuilder: (_, index) {
-                      final item = individuList[index];
-                      return ListTile(
-                        contentPadding: EdgeInsets.zero,
-                        leading: CircleAvatar(
-                          backgroundColor: Colors.blue.shade100,
-                          child: Icon(Icons.person, color: Colors.blue),
-                        ),
-                        title: Text(item['nama'] ?? '-',
-                            style: TextStyle(fontWeight: FontWeight.w600)),
-                        subtitle: Text(item['instansi'] ?? '-'),
-                        trailing: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(Icons.chat_bubble_outline,
-                                size: 18, color: Colors.grey),
-                            SizedBox(width: 4),
-                            Text('${item['jumlah_interaksi'] ?? 0}'),
-                          ],
-                        ),
-                      );
-                    },
-                  ),
-          ],
+  Widget buildMatrixBox(String label, int count, Color color) {
+    return Container(
+      height: 100,
+      decoration: BoxDecoration(
+        color: color,
+        borderRadius: BorderRadius.circular(6),
+      ),
+      child: Center(
+        child: ListTile(
+          title: Text(
+            label,
+            style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          trailing: Text(
+            count.toString(),
+            style: TextStyle(
+                fontSize: 24, fontWeight: FontWeight.bold, color: Colors.white),
+          ),
         ),
       ),
+    );
+  }
+
+  Widget buildStakeholderMatrixCard() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text("StakeHolder Management",
+            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
+        SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: buildMatrixBox(
+                  "High Interest\nLow Influence", highLow, Colors.lightBlue),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: buildMatrixBox("High Interest\nHigh Influence", highHigh,
+                  Colors.blue.shade800),
+            ),
+          ],
+        ),
+        SizedBox(height: 16),
+        Row(
+          children: [
+            Expanded(
+              child: buildMatrixBox(
+                  "Low Interest\nLow Influence", lowLow, Colors.redAccent),
+            ),
+            SizedBox(width: 16),
+            Expanded(
+              child: buildMatrixBox(
+                  "Low Interest\nHigh Influence", lowHigh, Colors.red),
+            ),
+          ],
+        ),
+      ],
     );
   }
 
@@ -187,21 +261,45 @@ class _DashboardPageState extends State<DashboardPage> {
           children: [
             GridView.count(
               shrinkWrap: true,
-              crossAxisCount: 3,
+              crossAxisCount: 2,
               childAspectRatio: 3.8,
               mainAxisSpacing: 16,
+              crossAxisSpacing: 16,
               physics: NeverScrollableScrollPhysics(),
               children: [
-                buildStatCard("Total Instansi", totalInstansi, Icons.apartment,
-                    Colors.blue),
-                buildStatCard("Total Individu", totalIndividu,
-                    Icons.people_alt_outlined, Colors.green),
-                buildStatCard("Total Interaksi", totalInteraksi,
-                    Icons.connect_without_contact, Colors.deepOrange),
+                buildStatCard(
+                  "Total StakeHolders",
+                  totalIndividu,
+                  Icons.people_alt_outlined,
+                  Colors.green,
+                  subtitle: "Jumlah Individu yang berinteraksi",
+                ),
+                buildStatCard(
+                  "Total Instansi",
+                  totalInstansi,
+                  Icons.apartment,
+                  Colors.blue,
+                  subtitle: "Jumlah instansi yang aktif dan non-aktif",
+                ),
+                buildStatCard(
+                  "Total Interactions",
+                  totalInteraksi,
+                  Icons.connect_without_contact,
+                  Colors.deepOrange,
+                  subtitle: "Jumlah interaksi dengan stakeholder",
+                ),
+                buildStatCard(
+                  "Stakeholder aktif",
+                  stakeholderAktif,
+                  Icons.timeline_outlined,
+                  Colors.purple,
+                  subtitle:
+                      "Interaksi terjadi dalam kurun waktu 30 hari terakhir",
+                ),
               ],
             ),
             SizedBox(height: 24),
-            buildIndividuCard(),
+            buildStakeholderMatrixCard(),
           ],
         ),
       ),

@@ -10,11 +10,12 @@ class Sidebar extends StatelessWidget {
   final List<_MenuItem> menuItems = const [
     _MenuItem("Dashboard", Icons.dashboard, 0),
     _MenuItem("Instansi", Icons.apartment, 1),
-    _MenuItem("Individu", Icons.account_circle, 2),
-    _MenuItem("Timeline", Icons.calendar_today, 3),
-    _MenuItem("Bookmarks", Icons.bookmark_border, 4),
-    _MenuItem("Pengguna", Icons.groups, 5),
-    _MenuItem("Manajemen", Icons.settings, 6),
+    _MenuItem("Individu/Stakeholder", Icons.account_circle, 2),
+    _MenuItem("Interaksi", Icons.interests, 3),
+    _MenuItem("Timeline", Icons.calendar_today, 4),
+    _MenuItem("Bookmarks", Icons.bookmark_border, 5),
+    _MenuItem("Pengguna", Icons.groups, 6),
+    _MenuItem("Manajemen", Icons.settings, 7),
   ];
 
   @override

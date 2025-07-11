@@ -35,6 +35,10 @@ class _IndividuFormPageState extends State<IndividuFormPage> {
   };
 
   String? _selectedGender;
+  String? _selectedStatus;
+
+  DateTime? _tanggalLahir;
+  DateTime? _tanggalTerakhirKontak;
 
   Future<String> get _dbPath async {
     final dir = await getApplicationDocumentsDirectory();
@@ -69,7 +73,7 @@ class _IndividuFormPageState extends State<IndividuFormPage> {
         tanggal_terakhir_kontak TEXT,
         jenis_kelamin TEXT
       )
-  ''');
+    ''');
   }
 
   Future<void> simpanIndividu() async {
@@ -84,6 +88,47 @@ class _IndividuFormPageState extends State<IndividuFormPage> {
 
     await db.insert('individu', data);
     Navigator.pop(context);
+  }
+
+  Future<void> _selectDate(BuildContext context, String key) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: DateTime.now(),
+      firstDate: DateTime(1900),
+      lastDate: DateTime.now(),
+    );
+    if (picked != null) {
+      setState(() {
+        controllers[key]!.text = picked.toIso8601String().split('T').first;
+        if (key == 'tanggal_lahir') _tanggalLahir = picked;
+        if (key == 'tanggal_terakhir_kontak') _tanggalTerakhirKontak = picked;
+      });
+    }
+  }
+
+  Widget _buildDatePicker(String label, String key) {
+    return GestureDetector(
+      onTap: () => _selectDate(context, key),
+      child: AbsorbPointer(
+        child: TextFormField(
+          controller: controllers[key],
+          decoration: InputDecoration(labelText: label),
+          validator: (value) =>
+              value == null || value.isEmpty ? 'Wajib diisi' : null,
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTextField(String label, String key,
+      {TextInputType keyboardType = TextInputType.text}) {
+    return TextFormField(
+      controller: controllers[key],
+      keyboardType: keyboardType,
+      decoration: InputDecoration(labelText: label),
+      validator: (value) =>
+          value == null || value.isEmpty ? 'Wajib diisi' : null,
+    );
   }
 
   @override
@@ -101,21 +146,10 @@ class _IndividuFormPageState extends State<IndividuFormPage> {
     super.dispose();
   }
 
-  Widget _buildTextField(String label, String key,
-      {TextInputType keyboardType = TextInputType.text}) {
-    return TextFormField(
-      controller: controllers[key],
-      keyboardType: keyboardType,
-      decoration: InputDecoration(labelText: label),
-      validator: (value) =>
-          value == null || value.isEmpty ? 'Wajib diisi' : null,
-    );
-  }
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: Text('Tambah Data Individu')),
+      appBar: AppBar(title: Text('Tambah Data Individu/Stakeholder')),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16),
         child: Form(
@@ -128,9 +162,21 @@ class _IndividuFormPageState extends State<IndividuFormPage> {
               _buildTextField('Instansi', 'instansi'),
               _buildTextField('Nama Panggilan', 'nama_panggilan'),
               _buildTextField('Tempat Lahir', 'tempat_lahir'),
-              _buildTextField('Tanggal Lahir', 'tanggal_lahir'),
-              _buildTextField('No. HP', 'no_hp'),
-              _buildTextField('Email', 'email'),
+              _buildDatePicker('Tanggal Lahir', 'tanggal_lahir'),
+              _buildTextField('No. HP', 'no_hp',
+                  keyboardType: TextInputType.number),
+              TextFormField(
+                controller: controllers['email'],
+                keyboardType: TextInputType.emailAddress,
+                decoration: InputDecoration(labelText: 'Email'),
+                validator: (value) {
+                  if (value == null || value.isEmpty) return 'Wajib diisi';
+                  final emailRegex = RegExp(r'^[^@]+@[^@]+\.[^@]+');
+                  return emailRegex.hasMatch(value)
+                      ? null
+                      : 'Email tidak valid';
+                },
+              ),
               DropdownButtonFormField<String>(
                 value: _selectedGender,
                 decoration: InputDecoration(labelText: 'Jenis Kelamin'),
@@ -141,7 +187,21 @@ class _IndividuFormPageState extends State<IndividuFormPage> {
                 onChanged: (val) => setState(() => _selectedGender = val),
                 validator: (value) => value == null ? 'Wajib dipilih' : null,
               ),
-              _buildTextField('Status', 'status'),
+              DropdownButtonFormField<String>(
+                value: _selectedStatus,
+                decoration: InputDecoration(labelText: 'Status'),
+                items: ['Menikah', 'Belum Menikah']
+                    .map((status) =>
+                        DropdownMenuItem(value: status, child: Text(status)))
+                    .toList(),
+                onChanged: (val) {
+                  setState(() {
+                    _selectedStatus = val;
+                    controllers['status']!.text = val!;
+                  });
+                },
+                validator: (value) => value == null ? 'Wajib dipilih' : null,
+              ),
               _buildTextField('Alamat', 'alamat'),
               _buildTextField('Agama', 'agama'),
               _buildTextField('Dapil', 'dapil'),
@@ -151,11 +211,11 @@ class _IndividuFormPageState extends State<IndividuFormPage> {
               _buildTextField('File Foto', 'file_foto'),
               _buildTextField('Jumlah Interaksi', 'jumlah_interaksi',
                   keyboardType: TextInputType.number),
-              _buildTextField(
+              _buildDatePicker(
                   'Tanggal Terakhir Kontak', 'tanggal_terakhir_kontak'),
               SizedBox(height: 24),
               ElevatedButton(
-                  onPressed: simpanIndividu, child: Text('Simpan Individu')),
+                  onPressed: simpanIndividu, child: Text('Simpan Individu/Stakeholder')),
             ],
           ),
         ),
